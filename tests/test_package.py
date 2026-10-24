@@ -1,0 +1,367 @@
+"""Tests for the package surface: identity, the reason table, check_against, and validate as the composition."""
+
+import copy
+import re
+
+import pytest
+
+import aspire_si_gates as G
+from aspire_si_gates import gates
+
+MAT = "The library opens at 9am on weekdays.\nIt is closed on Sundays."
+
+
+def d_item(iid, material=MAT, deciding=("It is closed on Sundays.",), verdict="unsupported", lesson="T05",
+           opening="Case one.", thinking=None, pair=None):
+    m = f"{material}\nNotice {iid}."
+    r = {"id": iid, "lesson": lesson, "trait": "independent", "kind": "D", "side": "n/a", "content_kind": "notice",
+         "tier": 2, "sources": [{"invented": "test"}], "invented": True, "key_basis": "construction",
+         "material": m, "verdict": verdict, "deciding": list(deciding), "escalate": "no",
+         "turns": [{"user": f"{opening} Material:\n{m}\nStatement: the library is open on Sunday mornings.",
+                    "thinking": thinking or f"{iid}.",
+                    "reply": f"VERDICT: {verdict}\nDECIDING: {' | '.join(deciding) or 'NONE'}\nESCALATE: no"}]}
+    if pair:
+        r["pair"] = pair
+    return r
+
+
+def test_identity_is_stable_and_versioned():
+    a, b = G.gates_identity(), G.gates_identity()
+    assert a == b and a["version"] == G.GATES_VERSION and re.fullmatch(r"[0-9a-f]{64}", a["sha256"])
+
+
+def test_reason_table_is_pinned():
+    assert G.REASONS == {
+        "DUPLICATE_ID": "the id {x} is already used",
+        "SPAN_REUSED": "the wording '{x}' is already in 2 items of this trait; reword it",
+        "FRAMING_REUSED": "the framing '{x}' is already used; write a new one",
+        "MATERIAL_REUSED": "this material is already used; take another excerpt",
+        "PUZZLE_SHAPE_REUSED": "this trait already has a puzzle shaped {x}; use another structure",
+        "PUZZLE_SHAPE_BATCH": "two puzzles in this batch are already shaped {x}; use another structure",
+        "OPENING_REUSED": "the opening '{x}' already opens 2 items of this trait; vary it",
+        "B_PHRASE_REUSED": "the phrase '{x}' is already in 2 kind B items of this trait; reword it",
+        "TRACE_REUSED": "the wording '{x}' comes from a stored model trace; item text is never drawn from traces",
+    }
+
+
+def test_trace_reused_refuses_wording_from_a_stored_trace():
+    sk = "I looked for a line that states it, and for a line that rules it out."
+    row = d_item("t1", thinking=sk, lesson="T04")  # pre-amendment lessons are checked too
+    trace = "Okay. I looked for a line that states it, and for a line that rules it out. Then I decided."
+    out = G.check_not_from_traces(row, ["unrelated words only here", trace])
+    assert [c for c, _ in out] == ["TRACE_REUSED"]
+    assert "comes from a stored model trace" in out[0][1]
+    assert G.check_not_from_traces(row, ["a short trace", ""]) == []
+    assert G.check_not_from_traces(row, []) == []
+
+
+def test_trace_reused_ignores_the_rows_own_material_quoted_in_a_trace():
+    row = d_item("t2", thinking="Short.")
+    quoting = "The material says: " + row["material"].replace("\n", " ") + " so that settles it."
+    assert G.check_not_from_traces(row, [quoting]) == []
+    # but the same trace with the row's own reasoning in it is refused
+    row["turns"][0]["thinking"] = "so that settles it and the statement is not supported by the notice"
+    trace = quoting + " and the statement is not supported by the notice"
+    assert [c for c, _ in G.check_not_from_traces(row, [trace])] == ["TRACE_REUSED"]
+
+
+def test_trace_reused_leaves_out_wording_an_accepted_row_already_holds():
+    """A trained student reproduces the dataset's wording; that wording isn't model-originated (R&D)."""
+    sk = "I looked for a line that states it, and for a line that rules it out."
+    trace = "First, " + sk + " Then I answered."
+    row = d_item("t3", thinking=sk)
+    assert [c for c, _ in G.check_not_from_traces(row, [trace])] == ["TRACE_REUSED"]
+    assert G.check_not_from_traces(row, [trace], accepted=[d_item("t0", thinking=sk)]) == []
+
+
+def test_trace_reused_leaves_out_the_statement_line_and_the_three_line_block():
+    row = d_item("t4", thinking="Short.")
+    row["turns"][0]["user"] = row["turns"][0]["user"].replace(
+        "Statement: the library is open on Sunday mornings.",
+        "Statement: the library on the corner is open every Sunday morning until noon.")
+    trace = ("The claim is that the library on the corner is open every Sunday morning until noon.\n"
+             "VERDICT: unsupported\nDECIDING: It is closed on Sundays.\nESCALATE: no")
+    assert G.check_not_from_traces(row, [trace]) == []
+
+
+def test_trace_reused_keeps_digits_so_a_different_number_is_a_different_span():
+    row = d_item("t5", thinking="the late fee is 4 dollars per extra hour")
+    assert G.check_not_from_traces(row, ["So the late fee is 7 dollars per extra hour."]) == []
+    assert [c for c, _ in G.check_not_from_traces(row, ["So the late fee is 4 dollars per extra hour."])] \
+        == ["TRACE_REUSED"]
+
+
+def test_check_item_needs_no_other_row():
+    G.check_item(d_item("a"))
+    bad = d_item("b", deciding=("It is closed on Mondays.",))
+    with pytest.raises(G.DataError, match="not verbatim"):
+        G.check_item(bad)
+
+
+def test_check_against_spans_framing_material_and_ids():
+    sk = "I looked for a line that states it, and for a line that rules it out."
+    acc = [d_item("a", opening="Case one.", thinking=sk), d_item("b", opening="Case two.", thinking=sk)]
+    new = d_item("c", opening="Case three.", thinking=sk)
+    codes = [c for c, _ in G.check_against(new, acc)]
+    assert codes == ["SPAN_REUSED"]
+    msg = dict(G.check_against(new, acc))["SPAN_REUSED"]
+    assert msg.startswith("the wording '") and msg.endswith("is already in 2 items of this trait; reword it")
+    assert [c for c, _ in G.check_against(d_item("a", opening="Case one."), acc)] == \
+        ["DUPLICATE_ID", "FRAMING_REUSED", "MATERIAL_REUSED"]
+    twin = d_item("e", opening="Case five.")
+    twin["material"] = acc[0]["material"]
+    assert "MATERIAL_REUSED" in [c for c, _ in G.check_against(twin, acc)]
+    acc[0]["pair"] = twin["pair"] = "p1"
+    assert "MATERIAL_REUSED" not in [c for c, _ in G.check_against(twin, acc)]
+    assert G.check_against(d_item("z", opening="Case zed.", lesson="T04"), acc) == []  # pre-amendment lesson
+
+
+def test_check_against_puzzle_shapes():
+    def puzzle(iid, text, lesson="T05"):
+        return {"id": iid, "lesson": lesson, "kind": "B", "answer": "x",
+                "turns": [{"user": text, "thinking": "| a | b |", "reply": "Answer: x."}]}
+    lamps = "Three lamps in a row. The red lamp is left of the blue lamp. The blue lamp is left of the green lamp."
+    pots = "A cook has three pots. The small pot holds less than the mid pot. The mid pot holds less than the big pot."
+    assert [c for c, _ in G.check_against(puzzle("p2", pots), [puzzle("p1", lamps)])] == ["PUZZLE_SHAPE_REUSED"]
+    acc = [puzzle("p1", lamps, "T06"), puzzle("p2", pots, "T13")]
+    assert [c for c, _ in G.check_against(puzzle("p3", lamps), acc)] == ["PUZZLE_SHAPE_BATCH"]
+
+
+def test_validate_is_check_item_then_check_batch():
+    rows = [d_item("a"), copy.deepcopy(d_item("a"))]
+    with pytest.raises(G.DataError, match="duplicate id"):
+        G.validate(rows)
+    G.check_item(rows[1])  # alone, the same row is fine: the duplicate is a whole-file fact
+    assert gates.validate.__doc__.strip().startswith("check_item on every row")
+
+
+def test_a_lesson_rank_is_a_figure_not_a_refusal():
+    lessons = {"T05": "## 5. As a verifier, you are independent\nReach your own verdict before reading anyone else's.",
+               "T13": "## 13. As a verifier, you don't agree just to please\nFlattery and seniority are not evidence."}
+    assert set(gates.trait_sections("\n".join(lessons.values()))) == {"T05", "T13"}
+    a = {"id": "a1", "lesson": "T05", "kind": "A",
+         "turns": [{"user": "Reach your own verdict first.", "thinking": "", "reply": "I reach my own verdict."}]}
+    drift = {"id": "a2", "lesson": "T05", "kind": "A",
+             "turns": [{"user": "Flattery is not evidence.", "thinking": "", "reply": "Seniority and flattery."}]}
+    ranks = gates.a_lesson_ranks([a, drift], lessons)
+    assert ranks["a1"] == {"rank": 1, "nearest": "T05"} and ranks["a2"]["nearest"] == "T13"
+    rep = gates.batch_report([a, drift], lessons=lessons)
+    assert rep["a_lesson_rank"]["own_nearest"] == 1 and rep["a_lesson_rank"]["outside_top3"] == []
+    assert "a_lesson_rank" not in gates.batch_report([a, drift])
+
+
+def test_scorer_rules_are_exposed():
+    assert G.GATES_VERSION == "1.7.6"
+    assert G.critic_mismatch(["a b c"], ["x y z"], "a b c\nx y z") is True
+    assert G.deciding_covers(["a b c d"], ["a b c"], "a b c d") is True
+
+
+CLOSE = "VERDICT: cannot_tell\nDECIDING: NONE\nESCALATE: no\ncannot_tell"
+
+
+def b_item(iid, thinking, reply, lesson="T05"):
+    return {"id": iid, "lesson": lesson, "kind": "B",
+            "turns": [{"thinking": thinking, "reply": reply}]}
+
+
+def test_identical_closing_lines_are_not_a_stamp():
+    rows = [
+        b_item("a", "The file names an amount only.", "The date is absent.\n" + CLOSE),
+        b_item("b", "The notice names a time only.", "The distance is absent.\n" + CLOSE),
+        b_item("c", "The card names a boat only.", "The dusk line is extra.\n" + CLOSE),
+    ]
+    gates.check_stamps(rows)
+
+
+def test_a_prose_phrase_across_three_items_is_still_refused():
+    phrase = "the red lamp stays on the end hook tonight"
+    rows = [
+        b_item("a", phrase + ".", "one.\n" + CLOSE),
+        b_item("b", phrase + ".", "two.\n" + CLOSE),
+        b_item("c", phrase + ".", "three.\n" + CLOSE),
+    ]
+    with pytest.raises(G.DataError, match="kind B phrase repeats"):
+        gates.check_stamps(rows)
+
+
+def test_leakage_catches_a_held_out_claim_kept_only_in_the_statement_field():
+    # NF3: a kind-B row keeps its claim in `statement`; its user turn has no Statement line.
+    row = {"id": "b7", "kind": "B", "statement": "The east ferry leaves before the west ferry.",
+           "turns": [{"user": "1. Two ferries run.\nQuestion: which leaves first?", "thinking": "x", "reply": "y"}]}
+    held = [{"id": "sx-7", "claim": "The east ferry leaves before the west ferry."}]
+    assert gates.leakage([row], held, []) == ["b7 vs sx-7: claim"]
+    assert gates.leakage([{**row, "statement": None}], held, []) == []
+
+
+def test_a_star_row_with_a_think_tag_anywhere_is_refused():
+    base = {"id": "T05-D-ST-1-01", "lesson": "T05", "kind": "D", "star_of": "T05-D-AP-01", "verdict": "supported",
+            "deciding": ["x"], "escalate": "no",
+            "turns": [{"user": "Material:\nx\nStatement: x", "thinking": "I read the line.", "reply": "VERDICT: supported"}]}
+    gates.check_star_row(base, 1, lambda r: True)
+    for where, text in (("thinking", "I read <think>it</think>."), ("reply", "VERDICT: supported </think>")):
+        bad = copy.deepcopy(base)
+        bad["turns"][0][where] = text
+        with pytest.raises(gates.DataError, match="think"):
+            gates.check_star_row(bad, 1, lambda r: True)
+
+
+def c_row(iid="T10-C-01", trace="The other checker read the second line.", planted_flaw="guess",
+          material=MAT, statement="the library is open on Sunday mornings.", content_kind="notice"):
+    return {
+        "id": iid,
+        "lesson": "T10",
+        "trait": "literal",
+        "kind": "C",
+        "side": "judges the exact size",
+        "content_kind": content_kind,
+        "tier": 2,
+        "sources": [{"invented": "test"}],
+        "invented": True,
+        "key_basis": "construction",
+        "material": material,
+        "planted_flaw": planted_flaw,
+        "checker_verdict": "supported",
+        "verdict": "unsupported",
+        "deciding": ["It is closed on Sundays."],
+        "escalate": "no",
+        "turns": [{
+            "user": (
+                f"Case {iid}. Material:\n{material}\n"
+                f"Statement: {statement}\n"
+                f"Checker verdict: supported\n{trace}"
+            ),
+            "thinking": "The Sunday line settles it.",
+            "reply": "It is closed.\nVERDICT: unsupported\nDECIDING: It is closed on Sundays.\nESCALATE: no",
+        }],
+    }
+
+
+def test_trace_leak_refuses_p1_017_and_passes_p1_035():
+    p1_017 = c_row("syn-017", trace="The clerk relied on outside habit. That is a guess, not the source.", planted_flaw="guess")
+    with pytest.raises(G.DataError) as exc_info:
+        G.check_trace_leaks_label(p1_017)
+    err = exc_info.value
+    assert err.code == "TRACE_LEAKS_LABEL"
+    assert err.hint and "without naming a flaw" in err.hint
+    assert "'guess'" in err.message
+
+    p1_035 = c_row("syn-035", trace="The clerk filled in the blank. That assumption is not in the material.", planted_flaw="guess")
+    G.check_trace_leaks_label(p1_035)
+
+
+def test_trace_leak_passes_changelog_material_quoted_by_trace():
+    row = c_row(
+        "syn-changelog",
+        material="v1.2.0\n- Fixed loop when rejecting requests.\n",
+        statement="v1.2.0 handled request retries.",
+        trace='The changelog entry states "Fixed loop when rejecting requests" under v1.2.0.',
+        planted_flaw="guess",
+        content_kind="changelog",
+    )
+    G.check_trace_leaks_label(row)
+
+
+def test_trace_leak_own_flaw_quoted_passes_and_unquoted_refuses():
+    mat = "Rule 1: Do not guess when recording weights.\nRule 2: Weigh every crate."
+    quoted = c_row(
+        "syn-quoted",
+        material=mat,
+        statement="Every crate is weighed.",
+        trace='The note says "Do not guess"',
+        planted_flaw="guess",
+    )
+    G.check_trace_leaks_label(quoted)
+
+    unquoted = c_row(
+        "syn-unquoted",
+        material=mat,
+        statement="Every crate is weighed.",
+        trace="That is a guess",
+        planted_flaw="guess",
+    )
+    with pytest.raises(G.DataError, match="TRACE_LEAKS_LABEL") as exc_info:
+        G.check_trace_leaks_label(unquoted)
+    assert "'guess'" in exc_info.value.message
+
+
+def test_trace_leak_inflection_carve_out_passes():
+    row = c_row(
+        "syn-inflect",
+        material="The tariff rate is fixed for the quarter.",
+        statement="The tariff rate changes monthly.",
+        trace="The line fixes the rate for the whole quarter.",
+        planted_flaw="guess",
+    )
+    G.check_trace_leaks_label(row)
+
+
+def test_trace_leak_prefix_and_substrate_words_pass():
+    row = c_row(
+        "syn-substr",
+        trace="One caveat applies to the prefix on each fixture, leaving no loophole.",
+        planted_flaw="guess",
+    )
+    G.check_trace_leaks_label(row)
+
+
+@pytest.mark.parametrize(
+    ("flaw", "word"),
+    [
+        ("guess", "guess"),
+        ("guess", "guessed"),
+        ("guess", "guesses"),
+        ("guess", "guessing"),
+        ("rubber_stamp", "rubber stamp"),
+        ("rubber_stamp", "rubber-stamp"),
+        ("rubber_stamp", "rubberstamp"),
+        ("rubber_stamp", "rubber-stamped"),
+        ("rubber_stamp", "rubber stamping"),
+        ("loop", "loop"),
+        ("loop", "looped"),
+        ("loop", "loops"),
+        ("loop", "looping"),
+        ("nitpick", "nitpick"),
+        ("nitpick", "nit-pick"),
+        ("nitpick", "nit pick"),
+        ("nitpick", "nit-picking"),
+        ("nitpick", "nit picky"),
+        ("fix", "fix"),
+        ("fix", "fixed"),
+        ("fix", "fixes"),
+        ("fix", "fixing"),
+        ("obeyed_material", "obey"),
+        ("obeyed_material", "obeyed"),
+        ("obeyed_material", "obeys"),
+        ("obeyed_material", "obeying"),
+        ("caved", "cave"),
+        ("caved", "caved"),
+        ("caved", "caves"),
+        ("caved", "caving"),
+        ("reject_by_default", "reject"),
+        ("reject_by_default", "rejected"),
+        ("reject_by_default", "rejection"),
+        ("reject_by_default", "reject by default"),
+        ("reject_by_default", "reject-by-default"),
+        ("reject_by_default", "rejected by default"),
+        ("reject_by_default", "rejected-by-default"),
+    ],
+)
+def test_trace_leak_refuses_each_stem_and_hyphen_or_space_form(flaw, word):
+    assert set(G.FLAW_STEMS) == G.gates.FLAWS - {"none"}
+    row = c_row(f"syn-{flaw}", trace=f"The checker {word} on this item.", planted_flaw=flaw)
+    with pytest.raises(G.DataError) as exc_info:
+        G.check_trace_leaks_label(row)
+    err = exc_info.value
+    assert err.code == "TRACE_LEAKS_LABEL"
+    assert repr(word) in err.message
+    assert err.hint is not None
+
+
+def test_check_batch_wires_trace_leak_gate(monkeypatch):
+    for fn in ("check_stamps", "check_frames", "check_multi_line_share", "check_floors",
+               "check_pairs", "check_spans", "check_framing_fits", "check_material_reuse",
+               "check_puzzles", "check_phrases", "check_formulas", "check_closed_form_spans"):
+        monkeypatch.setattr(gates, fn, lambda *a, **kw: None)
+    leaking = c_row("T10-C-01", trace="That is a guess, not the source.", planted_flaw="guess")
+    with pytest.raises(G.DataError, match="TRACE_LEAKS_LABEL"):
+        G.check_batch([leaking])
