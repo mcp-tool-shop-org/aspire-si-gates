@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "pins": {
+    "509703e1394e3394:ja": {
+      "lang": "ja",
+      "source": "An apply item's checks: the same content and shape rules as `check_item`, plus the apply rules (`split: apply` and an `-AP-` id, kind C or D, one turn, no pair, and the lesson's twin field). Refuses any row that is not an apply item.",
+      "translation": "適用項目のチェック：`check_item`と同じコンテンツと形状のルールに加えて、適用ルール（`split: apply`と`-AP-`のID、種類CまたはD、一ターン、ペアなし、およびレッスンに関連するフィールド）。適用項目でない行をすべて拒否します。",
+      "pinnedAt": "2026-10-29T19:47:34.919Z"
+    },
+    "7d0217cf36c773e2:ja": {
+      "lang": "ja",
+      "source": "**The data gates for Stage 1 role-training sets: one standard-library Python package that decides whether a row, a\nbatch or a frozen set of training items is fit to train on.** The trainer ([aspire-si](https://github.com/mcp-tool-shop-org/aspire-si))\nand the dataset generator ([role-set](https://github.com/mcp-tool-shop-org/role-set)) both call it, so what a generator\naccepts is exactly what the trainer will accept.",
+      "translation": "**ステージ1のロール学習セットのデータゲート：行、バッチ、または学習項目の固定セットが学習に適しているかどうかを決定する、標準ライブラリのPythonパッケージ。** トレーナー（[aspire-si](https://github.com/mcp-tool-shop-org/aspire-si)）とデータセットジェネレーター（[role-set](https://github.com/mcp-tool-shop-org/role-set)）の両方がこれを使用するため、ジェネレーターが受け入れるものは、トレーナーが受け入れるものとまったく同じです。",
+      "pinnedAt": "2026-10-29T19:47:34.918Z"
+    },
+    "f5bfb654871baa3c:ja": {
+      "lang": "ja",
+      "source": "Refuses a kind C row whose checker trace names its own planted flaw, or any flaw stem outside the two-step carve-out. Wired into `check_batch`.",
+      "translation": "チェッカーのトレースが自身の埋め込まれた欠陥、または二段階の切り出し範囲外の欠陥を指す種類Cの行を拒否します。`check_batch`に組み込まれています。",
+      "pinnedAt": "2026-10-29T19:47:34.919Z"
+    }
+  }
+}

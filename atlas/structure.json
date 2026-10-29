@@ -27,6 +27,13 @@
             "npx"
           ],
           "step": "5"
+        },
+        {
+          "job": "test",
+          "programs": [
+            "npm"
+          ],
+          "step": "Audit the site's npm tree (the package itself has no dependencies)"
         }
       ],
       "elsewhere": [],
@@ -158,6 +165,7 @@
             ".github/workflows/**",
             "atlas/**",
             "pyproject.toml",
+            "site/package*.json",
             "src/**",
             "tests/**"
           ]
@@ -215,10 +223,32 @@
   "edges": [],
   "engine": "1.24.0",
   "generatedFrom": {
-    "commit": "430862b2a666f66cf80157e2c33f66b7cf60c0a6",
+    "commit": "8ed78f2fee388e81443953f8dd3753c73e1ff2bd",
     "tracked": 24
   },
   "landings": [
+    {
+      "readers": [
+        {
+          "by": "pyproject.toml",
+          "call": "configuration",
+          "confidence": "config"
+        }
+      ],
+      "target": "LICENSE",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "pyproject.toml",
+          "call": "configuration",
+          "confidence": "config"
+        }
+      ],
+      "target": "README.md",
+      "writers": []
+    },
     {
       "readers": [
         {
@@ -277,15 +307,15 @@
       "path": ".gitattributes"
     },
     {
-      "hash": "39e133063380e7d8792e8f368b28eb21075b40c8e1c446937a544779bcd809d7",
+      "hash": "464090c6a36a7520283d621d813a8f997b5df200ec9eb7ce600e400d9e95d235",
       "path": ".github/workflows/ci.yml"
     },
     {
-      "hash": "1e105105e9364641271fd5a1b8325a0554debdcf19435b5931f5c5333198c650",
+      "hash": "513eb15976e03d663634f7c4ad6704968767a56afdacac0cc4c255587c985267",
       "path": ".gitignore"
     },
     {
-      "hash": "6414c0e0627b7c6d030bcee774f617b3f803cdf05607877e84476bf9cfd51db2",
+      "hash": "100f9bed812039b40e4e33eb36696ae3dfe3d8df0e4e3b31ce2bcd77b418ce73",
       "path": "CHANGELOG.md"
     },
     {
@@ -293,15 +323,15 @@
       "path": "LICENSE"
     },
     {
-      "hash": "cf547abccfde9c02cc9b24ec469756f732eb4d06dad301707552dd4717c45a0c",
+      "hash": "51a2214cb3459f47ff7b2895182a879f5ec8edd62a745b81de6b5d6e60081945",
       "path": "README.md"
     },
     {
-      "hash": "0af03e2929856278a99b020797732e130b608075ee20eff53a8c17a110315297",
+      "hash": "c07af39f7c9983801c74d0f67600535631f47540d0344dfb6b72e597d43d3995",
       "path": "SECURITY.md"
     },
     {
-      "hash": "4544a12e0cd7624b6ffcfba61cf4b79854433026be963b4e38448dc19411f262",
+      "hash": "006055a68269cd8dd120f1434ebe6d945755d08cfe2d2c70e2c4a3c8e193c2a8",
       "path": "pyproject.toml"
     },
     {

@@ -1,18 +1,21 @@
 # aspire-si-gates: how it works
 
-Mapped at 2026-10-24 from commit 430862b by Atlas 1.24.0.
+Mapped at 2026-10-29 from commit 8ed78f2 by Atlas 1.24.0.
 
 ## What this is
 
 0 parts, mostly Python (12 files). Work enters through 2 doors, and none of them runs a file this map can see.
 
-## What changed since the last map
+## What changed since 2026-10-24 (430862b)
 
-This is the first map.
+- ci's push trigger now also names `site/package*.json`.
+- LICENSE is now read by pyproject.toml.
+- README.md is now read by pyproject.toml.
+- 6 files changed content.
 
 ## What comes in
 
-1. **ci.** On a pull request; on a push to main touching 5 paths; or by hand. Runs tests/test_apply_item.py, tests/test_closed_form.py, tests/test_material_and_puzzles.py and 2 more.
+1. **ci.** On a pull request; on a push to main touching 6 paths; or by hand. Runs tests/test_apply_item.py, tests/test_closed_form.py, tests/test_material_and_puzzles.py and 2 more.
 2. **aspire_si_gates** (the package's entry, not published from here). Loads src/aspire_si_gates/__init__.py.
 
 ## What breaks what
@@ -52,6 +55,6 @@ No door runs a file this map can see, so there is no path through this repositor
 ## What this map cannot see
 
 - 24 files belong to no part: .gitattributes, .github/workflows/ci.yml, .gitignore and 21 more.
-- Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 20 source files reach 10 revisions.
+- Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions.
 
 Regenerate with `npx --yes @dogfood-lab/atlas map`.
