@@ -58,9 +58,9 @@
 ## E. Identity (soft gate — does not block ship)
 
 - [x] `[all]` Logo in README header (2026-10-29; brand logo, brand repo logos/aspire-si-gates)
-- [ ] `[all]` Translations (polyglot-mcp, 8 languages)
-- [ ] `[org]` Landing page (@mcptoolshop/site-theme)
-- [ ] `[all]` GitHub repo metadata: description, homepage, topics
+- [x] `[all]` Translations (polyglot-mcp, 8 languages) (2026-10-29; 7 READMEs by TranslateGemma 27B, ja pinned after a hand fix)
+- [x] `[org]` Landing page (@mcptoolshop/site-theme) (2026-10-29; https://mcp-tool-shop-org.github.io/aspire-si-gates/ and /handbook/ return 200)
+- [x] `[all]` GitHub repo metadata: description, homepage, topics (2026-10-29)
 
 ---
 
