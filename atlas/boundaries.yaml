@@ -1,2 +1,26 @@
-summary: ""
-boundaries: []
+summary: "aspire-si-gates is the Stage 1 data gates for role-training sets: one standard-library Python package that decides whether a row, a batch or a frozen set is fit to train on. It reads the rows it is given and nothing else."
+boundaries:
+  - name: .github
+    globs:
+      - .github/**
+    role: config
+  - name: scripts
+    globs:
+      - scripts/**
+    role: code
+  - name: site
+    globs:
+      - site/**
+    role: docs
+  - name: src
+    globs:
+      - src/**
+    role: code
+  - name: tests
+    globs:
+      - tests/**
+    role: test
+  - name: root
+    globs:
+      - "*"
+    role: config

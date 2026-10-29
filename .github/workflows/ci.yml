@@ -8,6 +8,7 @@ on:
       - src/**
       - tests/**
       - atlas/**
+      - site/package*.json
       - .github/workflows/**
   pull_request:
   workflow_dispatch:
@@ -39,3 +40,7 @@ jobs:
           node-version: 22
       - if: matrix.python-version == '3.12'
         run: npx --yes @dogfood-lab/atlas@1.24.0 check
+      - if: matrix.python-version == '3.12'
+        name: Audit the site's npm tree (the package itself has no dependencies)
+        working-directory: site
+        run: npm ci && npm audit --audit-level=high
