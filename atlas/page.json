@@ -1,47 +1,114 @@
 {
-  "authored": [],
-  "breaks": [],
+  "authored": [
+    ".github/",
+    "root",
+    "site/"
+  ],
+  "breaks": [
+    {
+      "doors": 3,
+      "importedBy": [],
+      "importedByTests": [
+        "tests"
+      ],
+      "kind": "part",
+      "name": "src",
+      "partLabel": "src"
+    }
+  ],
   "changes": {
     "fileCounts": {
-      "added": 0,
-      "changed": 6,
-      "moved": 0,
-      "parts": 0,
+      "added": 29,
+      "changed": 0,
+      "moved": 24,
+      "parts": 6,
       "removed": 0
     },
     "items": [
       {
+        "kind": "import-added",
+        "sentence": "tests now imports src.",
+        "subjects": [
+          "tests",
+          "src"
+        ]
+      },
+      {
         "kind": "door",
-        "sentence": "ci's push trigger now also names `site/package*.json`.",
+        "sentence": "Deploy site to GitHub Pages (.github/workflows/pages.yml) is a new door. It starts on a push to main touching 2 paths; or by hand. It runs site/astro.config.mjs and site/src/.",
         "subjects": [
-          ".github/workflows/ci.yml"
+          ".github/workflows/pages.yml",
+          "site/astro.config.mjs",
+          "site/src/"
+        ]
+      },
+      {
+        "kind": "door",
+        "sentence": "Release (.github/workflows/release.yml) is a new door. It starts when a release is published; or by hand. It checks src/.",
+        "subjects": [
+          ".github/workflows/release.yml",
+          "src/"
         ]
       },
       {
         "kind": "landing",
-        "sentence": "LICENSE is now read by pyproject.toml.",
+        "sentence": "pyproject.toml is now read by .github/workflows/release.yml.",
         "subjects": [
-          "LICENSE",
-          "pyproject.toml"
+          "pyproject.toml",
+          ".github/workflows/release.yml"
         ]
       },
       {
         "kind": "landing",
-        "sentence": "README.md is now read by pyproject.toml.",
+        "sentence": "site/src/content/docs/ is now read by site/astro.config.mjs.",
         "subjects": [
-          "README.md",
-          "pyproject.toml"
+          "site/src/content/docs/",
+          "site/astro.config.mjs"
         ]
+      },
+      {
+        "kind": "landing",
+        "sentence": "site/src/content/docs/handbook/ is now read by site/astro.config.mjs.",
+        "subjects": [
+          "site/src/content/docs/handbook/",
+          "site/astro.config.mjs"
+        ]
+      },
+      {
+        "kind": "part",
+        "sentence": ".github is a new part, drawn from `.github/**`.",
+        "subjects": [
+          ".github"
+        ]
+      },
+      {
+        "kind": "part",
+        "sentence": "the repository root is a new part, drawn from `*`.",
+        "subjects": [
+          "root"
+        ]
+      },
+      {
+        "kind": "part",
+        "sentence": "scripts is a new part, drawn from `scripts/**`.",
+        "subjects": [
+          "scripts"
+        ]
+      },
+      {
+        "kind": "part",
+        "sentence": "And 3 more changes to the parts.",
+        "subjects": []
       },
       {
         "kind": "counts",
-        "sentence": "6 files changed content.",
+        "sentence": "29 files added and 24 moved, across 6 parts.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "430862b2a666f66cf80157e2c33f66b7cf60c0a6",
-      "generatedAt": "2026-10-24T20:21:58.631Z"
+      "commit": "8ed78f2fee388e81443953f8dd3753c73e1ff2bd",
+      "generatedAt": "2026-10-29T19:45:31.156Z"
     },
     "unchanged": false
   },
@@ -50,9 +117,9 @@
     "Window: 180 days; a pair counts from 3 shared commits, since the window holds fewer than 30 qualifying commits."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "8ed78f2fee388e81443953f8dd3753c73e1ff2bd",
+  "commit": "250845f2526ebc9594f00549653a56fee01282fa",
   "defaultBranch": "main",
-  "derived": "0 parts, mostly Python (12 files). Work enters through 2 doors, and none of them runs a file this map can see.",
+  "derived": "6 parts, mostly Python (12 files), CSS (2), TypeScript (2), Astro (1), JavaScript (1) and shell (1). Work enters through 4 doors; the busiest is ci, which reaches 2 parts. It publishes to PyPI. It deploys a site to GitHub Pages. People import aspire_si_gates.",
   "doors": [
     {
       "checks": [],
@@ -63,7 +130,18 @@
       "landings": [],
       "name": "ci",
       "pushes": false,
-      "reach": [],
+      "reach": [
+        {
+          "boundary": "tests",
+          "depth": 0,
+          "files": 5
+        },
+        {
+          "boundary": "src",
+          "depth": 1,
+          "files": 6
+        }
+      ],
       "runs": [
         "tests/test_apply_item.py",
         "tests/test_closed_form.py",
@@ -85,13 +163,81 @@
       "checks": [],
       "checksCount": 0,
       "checksMore": 0,
+      "file": ".github/workflows/pages.yml",
+      "id": ".github/workflows/pages.yml",
+      "landings": [],
+      "name": "Deploy site to GitHub Pages",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "site",
+          "depth": 0,
+          "files": 5
+        }
+      ],
+      "runs": [
+        "site/astro.config.mjs",
+        "site/src/"
+      ],
+      "runsCount": 2,
+      "runsMore": 0,
+      "sends": [
+        "deploys the site"
+      ],
+      "stages": [],
+      "triggers": [
+        "on a push to main touching 2 paths",
+        "or by hand"
+      ]
+    },
+    {
+      "checks": [
+        "src/"
+      ],
+      "checksCount": 1,
+      "checksMore": 0,
+      "file": ".github/workflows/release.yml",
+      "id": ".github/workflows/release.yml",
+      "landings": [],
+      "name": "Release",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 6
+        }
+      ],
+      "runs": [],
+      "runsCount": 0,
+      "runsMore": 0,
+      "sends": [
+        "publishes to PyPI",
+        "uploads dist/*.tar.gz and dist/*.whl to the release"
+      ],
+      "stages": [],
+      "triggers": [
+        "when a release is published",
+        "or by hand"
+      ]
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "checksMore": 0,
       "file": "pyproject.toml",
       "id": "pyproject.toml#aspire_si_gates",
       "kind": "package",
       "landings": [],
       "name": "aspire_si_gates",
       "pushes": false,
-      "reach": [],
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 6
+        }
+      ],
       "runs": [
         "src/aspire_si_gates/__init__.py"
       ],
@@ -99,8 +245,7 @@
       "runsMore": 0,
       "sends": [],
       "stages": [],
-      "triggers": [],
-      "unpublished": true
+      "triggers": []
     }
   ],
   "duplicates": [],
@@ -109,28 +254,50 @@
   "edges": [],
   "engine": "1.24.0",
   "generated": [],
-  "generatedAt": "2026-10-29T19:45:31.156Z",
+  "generatedAt": "2026-10-29T19:49:51.820Z",
   "limits": [
-    "24 files belong to no part: .gitattributes, .github/workflows/ci.yml, .gitignore and 21 more.",
+    "1 read uses a path built at run time and is not named here.",
+    "3 reads go to a path their caller passes, not to this repository.",
     "Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions."
   ],
-  "mainDoor": null,
-  "partLabels": {},
-  "parts": 0,
+  "mainDoor": ".github/workflows/ci.yml",
+  "partLabels": {
+    ".github": ".github",
+    "root": "the repository root",
+    "scripts": "scripts",
+    "site": "site",
+    "src": "src",
+    "tests": "tests"
+  },
+  "parts": 6,
   "readers": [],
   "repo": "mcp-tool-shop-org/aspire-si-gates",
   "sequences": [],
-  "startDoor": null,
-  "startHere": [],
-  "summary": null,
-  "summaryFrom": null,
+  "startDoor": "pyproject.toml#aspire_si_gates",
+  "startHere": [
+    "src/aspire_si_gates/__init__.py",
+    "src/aspire_si_gates/context.py",
+    "src/aspire_si_gates/gates.py",
+    "src/aspire_si_gates/answer_format.py"
+  ],
+  "startReason": "This path follows aspire_si_gates (the package people import) from its entry, since ci runs only tests.",
+  "summary": "aspire-si-gates is the Stage 1 data gates for role-training sets: one standard-library Python package that decides whether a row, a batch or a frozen set is fit to train on. It reads the rows it is given and nothing else.",
+  "summaryFrom": "person",
   "testFiles": 10,
-  "testedBy": {},
+  "testedBy": {
+    "src": 5
+  },
   "unnamedWrites": 0,
   "unread": [],
+  "unreadCode": [
+    "scripts"
+  ],
+  "unreadCodeUses": "scripts holds only shell files, which this map does not read, so what uses it cannot be seen.",
   "unreadFiles": 0,
   "unreadNote": [],
   "untested": [],
-  "untestedNote": [],
+  "untestedNote": [
+    "scripts holds only shell files, which this map does not read, so whether a test touches it cannot be seen."
+  ],
   "written": 0
 }
