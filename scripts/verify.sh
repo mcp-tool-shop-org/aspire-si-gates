@@ -7,8 +7,9 @@ rm -rf dist
 python -m pip install --quiet build
 python -m build
 tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
 python -m venv "$tmp/venv"
-"$tmp/venv/bin/pip" install --quiet dist/*.whl 2>/dev/null || "$tmp/venv/Scripts/pip" install --quiet dist/*.whl
-"$tmp/venv/bin/python" -c "import aspire_si_gates as g; print(g.gates_identity())" 2>/dev/null \
-  || "$tmp/venv/Scripts/python" -c "import aspire_si_gates as g; print(g.gates_identity())"
+if [ -x "$tmp/venv/bin/python" ]; then py="$tmp/venv/bin/python"; else py="$tmp/venv/Scripts/python.exe"; fi
+"$py" -m pip install --quiet dist/*.whl
+"$py" -c "import aspire_si_gates as g; print(g.gates_identity())"
 echo "verify: OK"

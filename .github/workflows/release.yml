@@ -2,8 +2,8 @@
 # Jobs: build, provenance, publish, upload.
 # Trusted publishing: PyPI trusts this repository, this file name, and the
 # pypi environment. No API token is stored.
-# A workflow_dispatch on a tag runs the same check. A branch dispatch fails
-# the tag check and does not publish. This workflow is not push-triggered.
+# It runs only when a GitHub release is published: there is no manual trigger, so nothing
+# else can reach the publish job. It is not push-triggered.
 # Undo: delete the release asset. A PyPI file is yanked.
 # Owner: the Publisher.
 
@@ -12,7 +12,6 @@ name: Release
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,6 +40,7 @@ jobs:
           python - <<'PY'
           import os
           import pathlib
+          import re
           import tomllib
 
           ref_type = os.environ["GITHUB_REF_TYPE"]
@@ -48,7 +48,7 @@ jobs:
           if ref_type != "tag":
               raise SystemExit(
                   f"ref {ref_name!r} is a {ref_type}, not a tag. "
-                  "Dispatch this workflow on the release tag."
+                  "This workflow publishes only for a release tag."
               )
           version = tomllib.loads(
               pathlib.Path("pyproject.toml").read_text(encoding="utf-8")
@@ -57,6 +57,12 @@ jobs:
           if tag != version:
               raise SystemExit(
                   f"tag {ref_name} does not match pyproject version {version}"
+              )
+          init = pathlib.Path("src/aspire_si_gates/__init__.py").read_text(encoding="utf-8")
+          gates_version = re.search(r'^GATES_VERSION = "([^"]+)"', init, re.M).group(1)
+          if gates_version != version:
+              raise SystemExit(
+                  f"GATES_VERSION {gates_version} in __init__.py does not match pyproject version {version}"
               )
           PY
 
