@@ -1,37 +1,30 @@
 # aspire-si-gates: how it works
 
-Mapped at 2026-10-29 from commit 250845f by Atlas 1.24.0.
+Mapped at 2026-11-11 from commit 967bf47 by Atlas 1.26.0.
 
 ## What this is
 
 aspire-si-gates is the Stage 1 data gates for role-training sets: one standard-library Python package that decides whether a row, a batch or a frozen set is fit to train on. It reads the rows it is given and nothing else. (written by a person)
 
-6 parts, mostly Python (12 files), CSS (2), TypeScript (2), Astro (1), JavaScript (1) and shell (1). Work enters through 4 doors; the busiest is ci, which reaches 2 parts. It publishes to PyPI. It deploys a site to GitHub Pages. People import aspire_si_gates.
+6 parts, mostly Python (13 files), CSS (2), TypeScript (2), Astro (1), JavaScript (1) and shell (1). Work enters through 4 doors; the busiest is ci, which reaches 2 parts. It publishes to PyPI. It deploys a site to GitHub Pages. People import aspire_si_gates.
 
-## What changed since 2026-10-29 (8ed78f2)
+## What changed since 2026-10-29 (250845f)
 
-- tests now imports src.
-- Deploy site to GitHub Pages (.github/workflows/pages.yml) is a new door. It starts on a push to main touching 2 paths; or by hand. It runs site/astro.config.mjs and site/src/.
-- Release (.github/workflows/release.yml) is a new door. It starts when a release is published; or by hand. It checks src/.
-- pyproject.toml is now read by .github/workflows/release.yml.
-- site/src/content/docs/ is now read by site/astro.config.mjs.
-- site/src/content/docs/handbook/ is now read by site/astro.config.mjs.
-- .github is a new part, drawn from `.github/**`.
-- the repository root is a new part, drawn from `*`.
-- scripts is a new part, drawn from `scripts/**`.
-- And 3 more changes to the parts.
-- 29 files added and 24 moved, across 6 parts.
+- ci now also runs tests/test_workflows.py.
+- Release no longer starts by hand.
+- src/aspire_si_gates/*.py is now read by src/aspire_si_gates/__init__.py.
+- 1 file added and 5 changed content, across 4 parts.
 
 ## What comes in
 
-1. **ci.** On a pull request; on a push to main touching 6 paths; or by hand. Runs tests/test_apply_item.py, tests/test_closed_form.py, tests/test_material_and_puzzles.py and 2 more.
+1. **ci.** On a pull request; on a push to main touching 6 paths; or by hand. Runs tests/test_apply_item.py, tests/test_closed_form.py, tests/test_material_and_puzzles.py and 3 more.
 2. **Deploy site to GitHub Pages.** On a push to main touching 2 paths; or by hand. Runs site/astro.config.mjs and site/src/.
-3. **Release.** When a release is published; or by hand. Checks src/.
+3. **Release.** When a release is published. Checks src/.
 4. **aspire_si_gates** (the package people import). Loads src/aspire_si_gates/__init__.py.
 
 ## What happens through ci
 
-1. The workflow runs 5 files in tests.
+1. The workflow runs 6 files in tests.
 2. That reaches src (6 files).
 
 ## Who reads the results
@@ -88,7 +81,6 @@ Read those in order to follow one import of aspire_si_gates end to end. This pat
 
 ## What this map cannot see
 
-- 1 read uses a path built at run time and is not named here.
 - 3 reads go to a path their caller passes, not to this repository.
 - Statistics confidence is low: fewer than 30 qualifying commits in the window, and fewer than 25 source files reach 10 revisions.
 
