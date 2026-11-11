@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: 22
       - if: matrix.python-version == '3.12'
-        run: npx --yes @dogfood-lab/atlas@1.24.0 check
+        run: npx --yes @dogfood-lab/atlas@1.26.0 check
       - if: matrix.python-version == '3.12'
         name: Audit the site's npm tree (the package itself has no dependencies)
         working-directory: site
